@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "184082243303",
+    "project_id": "verdetech-88ea1",
+    "storage_bucket": "verdetech-88ea1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:184082243303:android:e330cd5f47ab267a0b4c42",
+        "android_client_info": {
+          "package_name": "com.krazylemon.verdetech102"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNoSiB5q9EfqK9zfNlRU7FvqY3axTStPk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

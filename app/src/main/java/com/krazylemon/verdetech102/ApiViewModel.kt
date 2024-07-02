@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
+import com.google.ai.client.generativeai.type.generationConfig
 import com.krazylemon.verdetech102.api.Constantes
 import com.krazylemon.verdetech102.api.DhtModel
 import com.krazylemon.verdetech102.api.NetworkResponse
@@ -23,14 +24,29 @@ class ApiViewModel :ViewModel() {
     val DhtResult : LiveData<NetworkResponse<DhtModel>> = _DhtResult
 
     /**  CHAT BOT **/
-    val generativeModel : GenerativeModel = GenerativeModel(
-        modelName = "gemini-pro",
-        apiKey = Constantes.API_KEY
-    )
+    private val generativeModel : GenerativeModel = GenerativeModel(
+        "gemini-1.5-pro",
+        // see https://github.com/google/secrets-gradle-plugin for further instructions
+        Constantes.API_KEY,
+        generationConfig = generationConfig {
+            temperature = 0.5f
+            topK = 64
+            topP = 0.95f
+            maxOutputTokens = 8192
+            responseMimeType = "text/plain"},
+        systemInstruction = content {
+            text("Eres un chat bot llamado Plant Bot de mi proyecto llamado Verde Tech" +
+                    " este es un prototipo hecho con ESP32 que gestiona el riego y toma " +
+                    "medidas sobre temperatura y humedad de mi sistema; tu funcion es responder " +
+                    "al usuario sobre preguntas relacionadas con el cuidado de los cultivos, plantas " +
+                    "y ambiente especificamente cualquier otra pregunta no la podras contestar; " +
+                    "el unico idioma de entrada y salida es el Español"
+            ) },
+        )
+
     val messageList by lazy{
         mutableStateListOf<MessageModel>()
     }
-
 
     fun getData(limit: Int){
         _DhtResult.value = NetworkResponse.Loading

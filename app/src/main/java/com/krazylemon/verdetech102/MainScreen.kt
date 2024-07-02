@@ -68,9 +68,9 @@ fun MainScreen(navController: NavController, ApiViewModel: ApiViewModel){
 @Composable
 fun ContentScreen(modifier: Modifier, selectedIndex : Int, ApiViewModel: ApiViewModel ) {
     when(selectedIndex){
-        0-> UsuarioPage()
+        0-> UsuarioPage(ApiViewModel)
         1-> HomeScreen(ApiViewModel)
         2-> ChatbotScreen(ApiViewModel)
-        3-> DatosScreen()
+        3-> DatosScreen(ApiViewModel)
     }
 }

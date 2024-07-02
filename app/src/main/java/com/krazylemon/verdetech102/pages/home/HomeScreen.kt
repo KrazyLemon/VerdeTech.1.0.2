@@ -43,6 +43,7 @@ fun HomeScreen(viewModel: ApiViewModel){
             delay(60000) // 60000 ms = 1 minuto
         }
     }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()

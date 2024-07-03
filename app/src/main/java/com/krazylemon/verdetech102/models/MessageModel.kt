@@ -1,4 +1,4 @@
-package com.krazylemon.verdetech102.chat
+package com.krazylemon.verdetech102.models
 
 data class MessageModel(
     val message : String,

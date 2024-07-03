@@ -1,11 +1,8 @@
 package com.krazylemon.verdetech102.pages.login
 
-import android.content.Context
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,32 +22,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.krazylemon.verdetech102.MainActivity
 import com.krazylemon.verdetech102.R
 import com.krazylemon.verdetech102.api.dbOperations
 
-@Composable
-fun RegisterScreen(navController: NavController,context: Context){
 
+@Composable
+fun PassScreen(
+    navController: NavController,
+    context: MainActivity
+){
     var db = dbOperations(context = context)
 
     var email by remember {
         mutableStateOf("")
     }
-    var password by remember {
-        mutableStateOf("")
-    }
-    var nombre by remember{
-        mutableStateOf("")
-    }
-    var equipo by remember {
-        mutableStateOf("")
-    }
     var error by remember {
+        mutableStateOf("")
+    }
+    var passnueva by remember {
         mutableStateOf("")
     }
 
@@ -73,7 +66,7 @@ fun RegisterScreen(navController: NavController,context: Context){
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Registra una Cuenta"
+            text = "Restablece tu contraseña"
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -85,66 +78,30 @@ fun RegisterScreen(navController: NavController,context: Context){
         Spacer(modifier = Modifier.height(4.dp))
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = nombre,
-            onValueChange = {nombre = it},
-            label = {
-                Text(text = "Nombre Completo")
-            }
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
             value = email,
             onValueChange = {email = it},
             label = {
                 Text(text = "Correo Electronico")
             }
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = password,
-            onValueChange = { password = it},
-            label = {
-                Text(text = "Contraseña")
-            },
-            visualTransformation = PasswordVisualTransformation()
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = equipo,
-            onValueChange = { equipo = it },
-            label = {
-                Text(text = "Numero de Equipo")
-            },
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Text(
-                text = "¿Olvidaste tu contraseña?",
-                modifier = Modifier.clickable {
-
-                },
-                color = MaterialTheme.colorScheme.secondary,
-                textDecoration = TextDecoration.Underline
-            )
-        }
         Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = {
-                if(nombre.isEmpty() || email.isEmpty() || password.isEmpty() || equipo.isEmpty()){
-                    error = "Por favor, complete todos los campos"
+                if(email.isEmpty() ){
+                    error = "Por favor, ingrese su correo electrónico"
                 }else{
                     try{
-                        val user = db.addUsuario(nombre,email,password,equipo)
-                        if(user != -1L){
-                            navController.navigate("home")
+                        val user = db.getUsuarioByEmail(email)
+                        if(user != null){
+                            val newpass = generarContrasenaAleatoria()
+                            val isUpdated = db.updateContrasena(email,newpass)
+                            if(isUpdated){
+                                passnueva = "Contraseña actualizada: ${ newpass }"
+                            }else{
+                                error = "Algo salió mal"
+                            }
                         }else{
-                            error = "Error al registrar usuario"
+                            error = "No se encontro su correo electrónico"
                         }
                     }catch ( e : Exception ){
                         error = "Error inesperado ${e.message.toString()}"
@@ -153,17 +110,21 @@ fun RegisterScreen(navController: NavController,context: Context){
             },
             modifier = Modifier.fillMaxWidth()
         ){
-            Text(text = "Registrarse")
+            Text(text = "Cambiar Contraseña")
         }
+
         Spacer(modifier = Modifier.height(32.dp))
-        Text(text = "¿Ya te has registrado?")
         Text(
-            text = "Inicia Sesión",
-            modifier = Modifier.clickable {
-                navController.navigate("login")
-            },
-            color = MaterialTheme.colorScheme.secondary,
-            textDecoration = TextDecoration.Underline
+            text = passnueva,
+            color = MaterialTheme.colorScheme.tertiary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
         )
     }
+}
+private fun generarContrasenaAleatoria(): String {
+    val caracteresPermitidos = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    return (1..8)
+        .map { caracteresPermitidos.random() }
+        .joinToString("")
 }

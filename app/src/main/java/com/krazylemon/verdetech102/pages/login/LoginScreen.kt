@@ -1,6 +1,7 @@
 package com.krazylemon.verdetech102.pages.login
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,21 +25,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.krazylemon.verdetech102.MainActivity
 import com.krazylemon.verdetech102.R
+import com.krazylemon.verdetech102.api.dbOperations
 
 @Composable
 fun LoginScreen(
-    navController: NavController
+    navController: NavController,
+    context: MainActivity
 ){
-    var view = LoginModelView()
+    var db = dbOperations(context = context)
 
     var email by remember {
         mutableStateOf("")
     }
     var password by remember {
+        mutableStateOf("")
+    }
+    var error by remember {
         mutableStateOf("")
     }
 
@@ -60,6 +69,13 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "Ingresa a tu cuenta"
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = error,
+            color = MaterialTheme.colorScheme.error,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(32.dp))
         OutlinedTextField(
@@ -87,15 +103,31 @@ fun LoginScreen(
             horizontalArrangement = Arrangement.End
         ) {
             Text(
-                text = "¿Olvidaste Tu Contraseña?"
+                text = "¿Olvidaste Tu Contraseña?",
+                modifier = Modifier.clickable {
+                    navController.navigate("pass")
+                },
+                color = MaterialTheme.colorScheme.secondary,
+                textDecoration = TextDecoration.Underline
             )
         }
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = {
-                view.singIn(email,password){
-                    navController.navigate("Home")
+                if(email.isEmpty() || password.isEmpty()) {
+                    error = "Por favor, complete todos los campos"
+                } else {
+                    try{
+                        val user = db.getUsuario(email,password)
+                        if(user !=null){
+                            navController.navigate("home")
+                        }else{
+                            error = "Correo electronico ó Contraseña incorrecta"
+                        }
+                    }catch (ex : Exception){
+                        error = "Error al iniciar sesion reinicie la app para continuar"
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -113,5 +145,6 @@ fun LoginScreen(
             Text(text = "Registrarse")
         }
     }
+
 
 }

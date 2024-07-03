@@ -1,4 +1,4 @@
-package com.krazylemon.verdetech102.api
+package com.krazylemon.verdetech102.models
 
 data class Message(
     val heat: String,

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,24 +30,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.krazylemon.verdetech102.ApiViewModel
 import com.krazylemon.verdetech102.R
-import com.krazylemon.verdetech102.chat.MessageModel
+import com.krazylemon.verdetech102.models.MessageModel
 import com.krazylemon.verdetech102.ui.theme.Turquoise30
 
 @Composable
-fun ChatbotScreen(ApiViewModel: ApiViewModel) {
+fun ChatbotScreen(ApiViewModel: ApiViewModel)  {
     Column(
-        modifier = Modifier
+
     ){
         ChatHeader()
+        MessageInput(onMessageSend = { ApiViewModel.sendMessage(it) })
         MessageList(messageList = ApiViewModel.messageList)
-        MessageInput(
-            onMessageSend = {
-                ApiViewModel.sendMessage(it)
-            }
-        )
     }
 }
 
@@ -58,18 +52,13 @@ fun MessageList(modifier: Modifier = Modifier,messageList : List<MessageModel>){
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
+                .padding(bottom = 30.dp),
+            verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_question),
-                contentDescription = "Fondo"
-            )
-            Text(
-                text = "Hola Soy Plantbot!! Preguntame lo que quieras " +
-                    "sobre plantas o el cuidado del ambiente",
-                fontSize = 22.sp
+                contentDescription = "Fondo",
             )
         }
     }else{
@@ -128,7 +117,8 @@ fun MessageInput(onMessageSend: (String)-> Unit){
         mutableStateOf("")
     }
     Row(
-        modifier = Modifier.padding(top = 8.dp),
+        modifier = Modifier
+            .padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ){
         OutlinedTextField(

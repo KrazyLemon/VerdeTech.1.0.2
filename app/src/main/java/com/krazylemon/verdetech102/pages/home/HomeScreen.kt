@@ -1,5 +1,7 @@
 package com.krazylemon.verdetech102.pages.home
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.sharp.Add
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,19 +33,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.krazylemon.verdetech102.ApiViewModel
 import com.krazylemon.verdetech102.R
-import com.krazylemon.verdetech102.api.DhtModel
+import com.krazylemon.verdetech102.models.DhtModel
 import com.krazylemon.verdetech102.api.NetworkResponse
 import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
-fun HomeScreen(viewModel: ApiViewModel){
+fun HomeScreen(
+    viewModel: ApiViewModel,
+    context: Context){
 
     val DhtResult = viewModel.DhtResult.observeAsState()
+    val action = "output_limit"
 
     LaunchedEffect(Unit) {
         while (true) {
-            viewModel.getData(1)
+            viewModel.getData(action,1)
+            viewModel.getOutputsState()
             delay(60000) // 60000 ms = 1 minuto
         }
     }
@@ -64,7 +74,7 @@ fun HomeScreen(viewModel: ApiViewModel){
                 lineHeight = 24.sp
             )
             IconButton(
-                onClick = { viewModel.getData(1) },
+                onClick = { viewModel.getData(action,1) },
             ) {
                 Icon(painter = painterResource(id = R.drawable.ic_refresh) , contentDescription = "RefreshIcon" )
             }
@@ -81,6 +91,7 @@ fun HomeScreen(viewModel: ApiViewModel){
             }
             null -> {}
         }
+
     }
 }
 @Composable
@@ -91,14 +102,17 @@ fun DhtDetails(data : DhtModel){
     var d = data.message[0].smp_d.toInt()
     var e = data.message[0].smp_e.toInt()
     var prom = (a + b + c + d + e) / 5
+    var res = ( prom * 100 ) / 4095
+    var hum = 100 - res
     var estado = ""
-    if(prom.toInt() >= 90 ){
+
+    if(hum.toFloat() >= 85 ){
         estado = "Excelente"
     }else{
-        if(90 > prom.toInt() && prom.toInt() <=80){
+        if( 70 > hum.toFloat() && hum.toFloat() <= 50){
             estado = "Bueno"
         }else{
-            if(80 > prom.toInt() && prom.toInt() <=70){
+            if( 30 > hum.toFloat() && hum.toFloat() <= 10){
                 estado = "Regular"
             }else{
                 estado = "Malo"
@@ -132,8 +146,8 @@ fun DhtDetails(data : DhtModel){
                 fontWeight = FontWeight.Light
             )
             CircularProgressIndicator(
-                progress = prom.toFloat() ,
-                color = setProgressColor(prom.toInt()),
+                progress = hum.toFloat() ,
+                color = setProgressColor(hum.toInt()),
                 strokeWidth = 16.dp,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -298,7 +312,7 @@ fun DhtDetails(data : DhtModel){
                             color = MaterialTheme.colorScheme.background
                         )
                         Text(
-                            text = "${ prom.toString() } %",
+                            text = "${ hum.toString() } %",
                             fontWeight = FontWeight.Bold,
                             fontSize = 40.sp,
                             color = MaterialTheme.colorScheme.background
@@ -325,15 +339,15 @@ fun DhtDetails(data : DhtModel){
 
 }
 
-fun setProgressColor(prom: Int): Color {
+fun setProgressColor(hum: Int): Color {
     var color = Color(0xFFFFFFFF)
-    if(prom >= 90 ){
+    if(hum.toFloat() >= 85){
         color = Color(0xFF00FF13)
     }else{
-        if(90 > prom && prom <=80){
+        if( 70 > hum.toFloat() && hum.toFloat() <= 50){
             color = Color(0xFFFFE100)
         }else{
-            if(80 > prom && prom <=70){
+            if(30 > hum.toFloat() && hum.toFloat() <= 10){
                 color = Color(0xFFFF7600)
             }else{
                 color = Color(0xFFFF2500)

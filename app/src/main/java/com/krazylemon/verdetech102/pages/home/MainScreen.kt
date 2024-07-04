@@ -77,7 +77,7 @@ fun MainScreen(
 @Composable
 fun ContentScreen(modifier: Modifier, selectedIndex : Int, ApiViewModel: ApiViewModel, dataViewModel: ApiViewModel,context: Context) {
     when(selectedIndex){
-        0-> UsuarioPage(ApiViewModel)
+        0-> UsuarioPage(context)
         1-> HomeScreen(ApiViewModel,context)
         2-> ChatbotScreen(ApiViewModel)
         3-> DatosScreen(dataViewModel)

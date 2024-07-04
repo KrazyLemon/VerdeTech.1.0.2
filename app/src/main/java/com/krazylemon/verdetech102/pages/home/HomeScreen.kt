@@ -3,6 +3,8 @@ package com.krazylemon.verdetech102.pages.home
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,10 +22,15 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,13 +44,16 @@ import com.krazylemon.verdetech102.models.DhtModel
 import com.krazylemon.verdetech102.api.NetworkResponse
 import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.krazylemon.verdetech102.api.OutputResponse
+import com.krazylemon.verdetech102.models.OutputList
 
 @Composable
-fun HomeScreen(
-    viewModel: ApiViewModel,
-    context: Context){
+fun HomeScreen(viewModel: ApiViewModel, context: Context){
 
     val DhtResult = viewModel.DhtResult.observeAsState()
+    val OutputsResult = viewModel.OutputResult.observeAsState()
+    
     val action = "output_limit"
 
     LaunchedEffect(Unit) {
@@ -59,7 +69,8 @@ fun HomeScreen(
             .fillMaxWidth()
             .fillMaxHeight(),
         verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+
     ) {
         Row(
             modifier = Modifier
@@ -87,15 +98,54 @@ fun HomeScreen(
                 CircularProgressIndicator()
             }
             is NetworkResponse.Success -> {
-                DhtDetails(data = result.data)
+                DhtDetails(viewModel, result.data)
             }
             null -> {}
         }
-
+        when(val result = OutputsResult.value){
+            is OutputResponse.Error ->{
+                Text(text = result.message)
+            }
+            OutputResponse.Loading ->{
+                //CircularProgressIndicator()
+            }
+            is OutputResponse.Success ->{
+                BombaButton(viewModel,result.data)
+            }
+            null->{}
+        }
     }
 }
+
+
 @Composable
-fun DhtDetails(data : DhtModel){
+fun BombaButton(viewModel : ApiViewModel,data: OutputList) {
+    var puerto = false
+    if(data.message[1].state != "1") puerto = true
+    else puerto = false
+
+    var bombaState by remember { mutableStateOf(puerto) }
+
+    Row {
+        Text(
+            if(!bombaState) "Bomba Desactivada" else "Bomba Activada",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Switch(
+            checked = bombaState,
+            onCheckedChange = {
+                if (!bombaState) viewModel.updateState(1)
+                else viewModel.updateState(0)
+                bombaState = it
+            }
+        )
+    }
+
+}
+
+@Composable
+fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
     var a = data.message[0].smp_a.toInt()
     var b = data.message[0].smp_b.toInt()
     var c = data.message[0].smp_c.toInt()

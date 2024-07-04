@@ -1,5 +1,6 @@
 package com.krazylemon.verdetech102.models
 
-data class ResponseModel(
+data class UpdatedModel(
+    val message: Message,
     val response: String
 )

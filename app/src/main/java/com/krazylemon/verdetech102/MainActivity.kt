@@ -17,12 +17,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val viewModel = ViewModelProvider(this)[ApiViewModel::class.java]
+        val dataViewModel = ViewModelProvider(this)[ApiViewModel::class.java]
         setContent {
             VerdeTech102Theme{
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = "login"){
                     composable(route = "home"){
-                        MainScreen(navController,viewModel,this@MainActivity)
+                        MainScreen(navController,viewModel,dataViewModel,this@MainActivity)
                     }
                     composable(route = "login"){
                         LoginScreen(navController, this@MainActivity )

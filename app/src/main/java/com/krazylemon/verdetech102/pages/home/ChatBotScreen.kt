@@ -118,7 +118,7 @@ fun MessageInput(onMessageSend: (String)-> Unit){
     }
     Row(
         modifier = Modifier
-            .padding(top = 8.dp),
+            .padding(top = 8.dp, start = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ){
         OutlinedTextField(

@@ -28,6 +28,7 @@ import com.krazylemon.verdetech102.models.NavItem
 fun MainScreen(
     navController: NavController,
     ApiViewModel: ApiViewModel,
+    dataViewModel: ApiViewModel,
     context: Context
 ) {
     val navItemsList = listOf(
@@ -66,6 +67,7 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding),
             selectedIndex,
             ApiViewModel,
+            dataViewModel,
             context
         )
     }
@@ -73,11 +75,11 @@ fun MainScreen(
 
 
 @Composable
-fun ContentScreen(modifier: Modifier, selectedIndex : Int, ApiViewModel: ApiViewModel, context: Context) {
+fun ContentScreen(modifier: Modifier, selectedIndex : Int, ApiViewModel: ApiViewModel, dataViewModel: ApiViewModel,context: Context) {
     when(selectedIndex){
         0-> UsuarioPage(ApiViewModel)
         1-> HomeScreen(ApiViewModel,context)
         2-> ChatbotScreen(ApiViewModel)
-        3-> DatosScreen(ApiViewModel)
+        3-> DatosScreen(dataViewModel)
     }
 }

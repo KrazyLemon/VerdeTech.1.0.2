@@ -1,7 +1,9 @@
 package com.krazylemon.verdetech102
 
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -12,8 +14,10 @@ import com.google.ai.client.generativeai.type.generationConfig
 import com.krazylemon.verdetech102.api.Constantes
 import com.krazylemon.verdetech102.models.DhtModel
 import com.krazylemon.verdetech102.api.NetworkResponse
+import com.krazylemon.verdetech102.api.OutputResponse
 import com.krazylemon.verdetech102.api.RetrofitInstance
 import com.krazylemon.verdetech102.models.MessageModel
+import com.krazylemon.verdetech102.models.OutputList
 import kotlinx.coroutines.launch
 
 class ApiViewModel :ViewModel() {
@@ -21,12 +25,12 @@ class ApiViewModel :ViewModel() {
     /** DHT MODEL **/
     private val DhtApi = RetrofitInstance.dhtApi
     private val _DhtResult = MutableLiveData<NetworkResponse<DhtModel>>()
-
-    // TODO 1- Crear las responses para output y Data para graficas
-    // TODO 2- Terminar la ventana de graficas e implementar el boton de Bomba y riego en temporizador (hilos en Kotlin)
-    // TODO 3- Implementa en User la ventana de nosostros(Copiar) y si hay tiempo meter mas consultas a la base interna d users ( cambiar correo, contra, etc)
+    private val _OutputResult = MutableLiveData<OutputResponse<OutputList>>()
 
     val DhtResult : LiveData<NetworkResponse<DhtModel>> = _DhtResult
+    val OutputResult : LiveData<OutputResponse<OutputList>> = _OutputResult
+    var UpdateOutputState = false
+
 
     /**  CHAT BOT **/
     private val generativeModel : GenerativeModel = GenerativeModel(
@@ -52,8 +56,8 @@ class ApiViewModel :ViewModel() {
     val messageList by lazy{
         mutableStateListOf<MessageModel>()
     }
-    /******************************************** API DHT MODEL **********************************************/
 
+    /******************************************** API DHT MODEL **********************************************/
     fun getData(action: String, limit: Int ){
         _DhtResult.value = NetworkResponse.Loading
         viewModelScope.launch {
@@ -65,7 +69,7 @@ class ApiViewModel :ViewModel() {
                        _DhtResult.value = NetworkResponse.Success(it)
                    }
                }else{
-                   //Log.i("Error: ",response.body().toString())
+                   Log.i("Error DHT: ",response.body().toString())
                    _DhtResult.value = NetworkResponse.Error("Fallo al cargar la Info")
                }
            } catch (e: Exception) {
@@ -84,6 +88,7 @@ class ApiViewModel :ViewModel() {
                     response.body()?.let{
                         _DhtResult.value = NetworkResponse.Success(it)
                     }
+
                 }else{
                     Log.i("Error: ",response.body().toString())
                     _DhtResult.value = NetworkResponse.Error("Fallo al cargar la Info")
@@ -94,12 +99,13 @@ class ApiViewModel :ViewModel() {
         }
     }
 
-    fun prendeBomba(state : Int){
+    fun updateState(state : Int){
+
         viewModelScope.launch {
             try{
-                val response = DhtApi.updateState("output_update",1, state)
+                val response = DhtApi.updateState("output_update",3, state)
                 if (response.isSuccessful){
-                    Log.i("Estado Bomba Actualizado a ${state}", response.body().toString())
+                    Log.i("Outputs Responses:", response.body().toString())
                 }else{
                     Log.i("Algo salio Mal", response.body().toString())
                 }
@@ -110,20 +116,25 @@ class ApiViewModel :ViewModel() {
     }
 
     fun getOutputsState(){
+        _OutputResult.value = OutputResponse.Loading
         viewModelScope.launch {
             try {
                 val response = DhtApi.getOutputsState("outputs_state",1)
                 if (response.isSuccessful){
-                    Log.i("Datos Recogidos", response.body().toString())
+                    Log.i("Outputs Responses:", response.body().toString())
+                    response.body()?.let{
+                        _OutputResult.value = OutputResponse.Success(it)
+                    }
                 }else{
                     Log.i("Algo salio Mal", response.body().toString())
+                    _DhtResult.value = NetworkResponse.Error("Fallo al cargar la Info")
                 }
             }catch (e : Exception){
                 Log.i("Algo salio Mal", e.message.toString())
+                _DhtResult.value = NetworkResponse.Error("Fallo al cargar la Info ${e.message}")
             }
         }
     }
-
 
     /******************************************** ChatBot MODEL **********************************************/
     fun sendMessage(soli : String){

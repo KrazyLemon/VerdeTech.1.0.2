@@ -1,6 +1,7 @@
 package com.krazylemon.verdetech102.pages.login
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +31,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.krazylemon.verdetech102.HomeActivity
 import com.krazylemon.verdetech102.R
 import com.krazylemon.verdetech102.api.dbOperations
 
@@ -142,7 +144,9 @@ fun RegisterScreen(navController: NavController,context: Context){
                     try{
                         val user = db.addUsuario(nombre,email,password,equipo)
                         if(user != -1L){
-                            navController.navigate("home")
+                            val intent = Intent(context, HomeActivity::class.java)
+                            context.startActivity(intent)
+                            //navController.navigate("home")
                         }else{
                             error = "Error al registrar usuario"
                         }

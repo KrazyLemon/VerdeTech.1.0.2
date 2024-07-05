@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +21,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +57,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatosScreen(viewModel: ApiViewModel){
@@ -64,6 +67,7 @@ fun DatosScreen(viewModel: ApiViewModel){
     var showDialog  by remember {
         mutableStateOf(false)
     }
+
     var firstDate by remember {
         mutableStateOf("")
     }
@@ -74,6 +78,36 @@ fun DatosScreen(viewModel: ApiViewModel){
         mutableStateOf("")
     }
     val state = rememberDateRangePickerState()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primary)
+    ){
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Text(
+                text = "Historal de Lecturas",
+                modifier = Modifier.padding(16.dp),
+                color = MaterialTheme.colorScheme.background,
+                fontSize = 22.sp
+            )
+            FilledIconButton(
+                onClick = { showDialog  = true }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_date),
+                    contentDescription = "Fecha Icon",
+                    tint = Color.White
+                )
+            }
+        }
+    }
     
     Column(
         modifier = Modifier
@@ -82,20 +116,7 @@ fun DatosScreen(viewModel: ApiViewModel){
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start
     ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceEvenly
-,            verticalAlignment = Alignment.CenterVertically
-        ){
-            Text(
-                text = "Historial de Lecturas",
-                color = Color.Black,
-                fontSize = 24.sp
-            )
-            Button(onClick = { showDialog  = true }) {
-                Text(text = "Fecha")
-            }
-
-        }
+        Spacer(modifier = Modifier.height(50.dp))
         Text(text = "Fecha inicial: ${firstDate} ")
         Text(text = "Fecha final: ${secondDate} ")
         Text(
@@ -158,22 +179,6 @@ fun DatosScreen(viewModel: ApiViewModel){
 }
 
 @Composable
-fun DatosHeader(){
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary)
-    ){
-        Text(text = "Historial de Datos",
-            modifier = Modifier.padding(16.dp),
-            color = MaterialTheme.colorScheme.background,
-            fontSize = 22.sp
-        )
-    }
-}
-
-
-@Composable
 fun TablaData(data: DhtModel) {
     var itemCount = data.message.size
     var dataList = data.message
@@ -187,13 +192,24 @@ fun TablaData(data: DhtModel) {
 
 @Composable
 fun RowTabla(mensaje: Message ){
+
+    var a = mensaje.smp_a.toInt()
+    var b = mensaje.smp_a.toInt()
+    var c = mensaje.smp_a.toInt()
+    var d = mensaje.smp_a.toInt()
+    var e = mensaje.smp_a.toInt()
+
+    var prom = (a + b + c + d + e) / 5
+    var res = ( prom * 100 ) / 4095
+    var hum = 100 - res
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(90.dp)
             .padding(vertical = 4.dp, horizontal = 10.dp)
             .background(
-                color = MaterialTheme.colorScheme.secondaryContainer,
+                color = setBGColor(hum).copy(alpha = .5f),
                 shape = MaterialTheme.shapes.small
             ),
     ) {
@@ -288,3 +304,21 @@ fun RowTabla(mensaje: Message ){
     }
 }
 
+fun setBGColor(hum : Int):Color{
+    var color = Color(0xFFFFFFFF)
+
+    if(hum > 85){
+        color = Color(0xFF00FF13)
+    }else{
+        if( hum in 51..85){
+            color = Color(0xFFFFE100)
+        }else{
+            if(hum in 31..50){
+                color = Color(0xFFFF7600)
+            }else{
+                color = Color(0xFFFF2500)
+            }
+        }
+    }
+    return color
+}

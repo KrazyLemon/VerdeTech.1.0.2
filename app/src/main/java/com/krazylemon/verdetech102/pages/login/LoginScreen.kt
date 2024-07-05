@@ -1,5 +1,7 @@
 package com.krazylemon.verdetech102.pages.login
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,14 +31,14 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.krazylemon.verdetech102.MainActivity
 import com.krazylemon.verdetech102.R
 import com.krazylemon.verdetech102.api.dbOperations
+import com.krazylemon.verdetech102.HomeActivity
 
 @Composable
 fun LoginScreen(
     navController: NavController,
-    context: MainActivity
+    context: Context
 ){
     var db = dbOperations(context = context)
 
@@ -121,12 +123,15 @@ fun LoginScreen(
                     try{
                         val user = db.getUsuario(email,password)
                         if(user !=null){
-                            navController.navigate("home")
+                            //navController.navigate("home")
+                            val intent = Intent(context, HomeActivity::class.java)
+                            context.startActivity(intent)
                         }else{
                             error = "Correo electronico ó Contraseña incorrecta"
                         }
                     }catch (ex : Exception){
-                        error = "Error al iniciar sesion reinicie la app para continuar"
+                        error = "Error al iniciar sesion reinicie la app para continuar ${ex.message}"
+
                     }
                 }
             },

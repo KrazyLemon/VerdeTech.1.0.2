@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,16 +36,17 @@ import androidx.compose.ui.unit.sp
 import com.krazylemon.verdetech102.ApiViewModel
 import com.krazylemon.verdetech102.R
 import com.krazylemon.verdetech102.models.MessageModel
+import com.krazylemon.verdetech102.ui.theme.GreenGrey80
 import com.krazylemon.verdetech102.ui.theme.Turquoise30
 
 @Composable
-fun ChatbotScreen(ApiViewModel: ApiViewModel)  {
+fun ChatbotScreen(modifier : Modifier = Modifier,ApiViewModel: ApiViewModel)  {
     Column(
-
+        modifier
     ){
         ChatHeader()
-        MessageInput(onMessageSend = { ApiViewModel.sendMessage(it) })
-        MessageList(messageList = ApiViewModel.messageList)
+        MessageList(Modifier.weight(1f), messageList = ApiViewModel.messageList)
+        MessageInput(onMessageSend =  { ApiViewModel.sendMessage(it) })
     }
 }
 
@@ -50,15 +54,35 @@ fun ChatbotScreen(ApiViewModel: ApiViewModel)  {
 fun MessageList(modifier: Modifier = Modifier,messageList : List<MessageModel>){
     if(messageList.isEmpty()){
         Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(bottom = 30.dp),
-            verticalArrangement = Arrangement.Bottom,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+            modifier = modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ){
             Icon(
-                painter = painterResource(id = R.drawable.ic_question),
-                contentDescription = "Fondo",
+                modifier = Modifier.size(60.dp),
+                painter = painterResource(id = R.drawable.ic_plantbot),
+                contentDescription = "Icon",
+                tint = GreenGrey80
+            )
+            Text(
+                modifier = Modifier.padding(start = 8.dp),
+                text = "Hola, soy Plantbot",
+                fontSize = 12.sp
+            )
+            Text(
+                modifier = Modifier.padding(start = 8.dp),
+                text = "Estoy aquí para ayudarte con preguntas sobre plantas, ",
+                fontSize = 12.sp
+            )
+            Text(
+                modifier = Modifier.padding(start = 8.dp),
+                text = "cultivos o tu equipo de Verdetech. ",
+                fontSize = 12.sp
+            )
+            Text(
+                modifier = Modifier.padding(start = 8.dp),
+                text = "Siéntete libre de preguntarme lo que sea.",
+                fontSize = 12.sp
             )
         }
     }else{
@@ -118,7 +142,7 @@ fun MessageInput(onMessageSend: (String)-> Unit){
     }
     Row(
         modifier = Modifier
-            .padding(top = 8.dp, start = 4.dp),
+            .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ){
         OutlinedTextField(
@@ -149,10 +173,11 @@ fun ChatHeader(){
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.primary)
     ){
-       Text(text = "Plant Bot",
+       Text(
+           text = "Plant Bot",
            modifier = Modifier.padding(16.dp),
            color = MaterialTheme.colorScheme.background,
            fontSize = 22.sp
-           )
+       )
     }
 }

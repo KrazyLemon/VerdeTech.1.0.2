@@ -18,6 +18,7 @@ import com.krazylemon.verdetech102.api.OutputResponse
 import com.krazylemon.verdetech102.api.RetrofitInstance
 import com.krazylemon.verdetech102.models.MessageModel
 import com.krazylemon.verdetech102.models.OutputList
+import com.krazylemon.verdetech102.models.UpdatedModel
 import kotlinx.coroutines.launch
 
 class ApiViewModel :ViewModel() {
@@ -26,11 +27,11 @@ class ApiViewModel :ViewModel() {
     private val DhtApi = RetrofitInstance.dhtApi
     private val _DhtResult = MutableLiveData<NetworkResponse<DhtModel>>()
     private val _OutputResult = MutableLiveData<OutputResponse<OutputList>>()
+    private val _UpdateResult = MutableLiveData<OutputResponse<UpdatedModel>>()
 
     val DhtResult : LiveData<NetworkResponse<DhtModel>> = _DhtResult
     val OutputResult : LiveData<OutputResponse<OutputList>> = _OutputResult
-    var UpdateOutputState = false
-
+    val UpdateResult : LiveData<OutputResponse<UpdatedModel>> = _UpdateResult
 
     /**  CHAT BOT **/
     private val generativeModel : GenerativeModel = GenerativeModel(
@@ -100,16 +101,20 @@ class ApiViewModel :ViewModel() {
     }
 
     fun updateState(state : Int){
-
+        _UpdateResult.value = OutputResponse.Loading
         viewModelScope.launch {
             try{
                 val response = DhtApi.updateState("output_update",3, state)
                 if (response.isSuccessful){
                     Log.i("Outputs Responses:", response.body().toString())
+                    response.body()?.let {
+                        _UpdateResult.value = OutputResponse.Success(it)
+                    }
                 }else{
                     Log.i("Algo salio Mal", response.body().toString())
                 }
             }catch (e : Exception){
+                Log.i("Algo salio Mal", e.message.toString())
                 Log.i("Algo salio Mal", e.message.toString())
             }
         }

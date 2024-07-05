@@ -2,6 +2,7 @@ package com.krazylemon.verdetech102.pages.home
 
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
@@ -9,8 +10,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,61 +49,64 @@ import com.krazylemon.verdetech102.models.DhtModel
 import com.krazylemon.verdetech102.api.NetworkResponse
 import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.krazylemon.verdetech102.api.OutputResponse
 import com.krazylemon.verdetech102.models.OutputList
+import com.krazylemon.verdetech102.models.UpdatedModel
+
+var autopump = false
+val action = "output_limit"
 
 @Composable
 fun HomeScreen(viewModel: ApiViewModel, context: Context){
 
+    val modifier = Modifier
     val DhtResult = viewModel.DhtResult.observeAsState()
     val OutputsResult = viewModel.OutputResult.observeAsState()
-    
-    val action = "output_limit"
+    val UpdateResult = viewModel.UpdateResult.observeAsState()
+
 
     LaunchedEffect(Unit) {
         while (true) {
             viewModel.getData(action,1)
-            viewModel.getOutputsState()
             delay(60000) // 60000 ms = 1 minuto
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.getOutputsState()
+    }
+
+    HomeHeader(modifier,viewModel)
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(),
-        verticalArrangement = Arrangement.Top,
+        modifier = modifier
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
 
     ) {
-        Row(
-            modifier = Modifier
-                .padding(vertical = 10.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Text(
-                text = "Lecturas del sistema",
-                fontSize = 24.sp,
-                lineHeight = 24.sp
-            )
-            IconButton(
-                onClick = { viewModel.getData(action,1) },
-            ) {
-                Icon(painter = painterResource(id = R.drawable.ic_refresh) , contentDescription = "RefreshIcon" )
-            }
-        }
         when(val result = DhtResult.value){
             is NetworkResponse.Error -> {
-                Text(text = result.message)
+                Column(
+                    modifier = modifier
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(text = result.message)
+                }
             }
             NetworkResponse.Loading -> {
-                CircularProgressIndicator()
+                Column(
+                    modifier = modifier
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
             is NetworkResponse.Success -> {
-                DhtDetails(viewModel, result.data)
+                DhtDetails(modifier,viewModel, result.data)
             }
             null -> {}
         }
@@ -107,110 +115,172 @@ fun HomeScreen(viewModel: ApiViewModel, context: Context){
                 Text(text = result.message)
             }
             OutputResponse.Loading ->{
+                CircularProgressIndicator()
+            }
+            is OutputResponse.Success ->{
+                BombaButton(modifier,viewModel,result.data)
+                //var bombaList = result.data
+            }
+            null->{}
+        }
+        when(val result = UpdateResult.value ){
+            is OutputResponse.Error ->{
+                Text(text = result.message)
+            }
+            OutputResponse.Loading ->{
                 //CircularProgressIndicator()
             }
             is OutputResponse.Success ->{
-                BombaButton(viewModel,result.data)
+                UpdateBomba(result.data)
+                //var bombaList = result.data
             }
             null->{}
         }
     }
 }
 
+@Composable
+fun UpdateBomba(data : UpdatedModel) {
+    Row{
+        Text(
+            text = "${data.message}"
+        )
+    }
+}
 
 @Composable
-fun BombaButton(viewModel : ApiViewModel,data: OutputList) {
+fun BombaButton(modifier: Modifier,viewModel : ApiViewModel,data: OutputList) {
     var puerto = false
-    if(data.message[1].state != "1") puerto = true
-    else puerto = false
-
+    if(data.message[1].state != "1") puerto = true else puerto = false
     var bombaState by remember { mutableStateOf(puerto) }
-
-    Row {
+    Row (
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ){
         Text(
-            if(!bombaState) "Bomba Desactivada" else "Bomba Activada",
+            text = "Bomba",
             fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = modifier
+                .padding(end = 4.dp)
+        )
+        Text(
+            if(!bombaState) "(Desactivada)" else "(Activada)",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = modifier
+                .padding(end = 4.dp)
         )
         Switch(
             checked = bombaState,
             onCheckedChange = {
-                if (!bombaState) viewModel.updateState(1)
+                if (bombaState) viewModel.updateState(1)
                 else viewModel.updateState(0)
                 bombaState = it
-            }
+            },
+            // Se deshabilita si esta en automode = True
+            enabled = !autopump
         )
     }
-
 }
 
 @Composable
-fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
+fun DhtDetails(modifier:Modifier,viewModel : ApiViewModel,data : DhtModel){
     var a = data.message[0].smp_a.toInt()
     var b = data.message[0].smp_b.toInt()
     var c = data.message[0].smp_c.toInt()
     var d = data.message[0].smp_d.toInt()
     var e = data.message[0].smp_e.toInt()
+
     var prom = (a + b + c + d + e) / 5
     var res = ( prom * 100 ) / 4095
     var hum = 100 - res
-    var estado = ""
+    var estado = setState(hum)
 
-    if(hum.toFloat() >= 85 ){
-        estado = "Excelente"
-    }else{
-        if( 70 > hum.toFloat() && hum.toFloat() <= 50){
-            estado = "Bueno"
-        }else{
-            if( 30 > hum.toFloat() && hum.toFloat() <= 10){
-                estado = "Regular"
-            }else{
-                estado = "Malo"
-            }
-        }
+    var tip by remember {
+        mutableStateOf("")
     }
 
+    autopump = autopump(hum)
+
+    if(autopump(hum)){
+        tip = "Inicio de Riego Automatico: Humedad Baja"
+        viewModel.updateState(0)
+    }else{
+        tip = "Humedad del suelo buena"
+        viewModel.updateState(1)
+    }
+
+
     Column(
-        modifier = Modifier
+        modifier = modifier
             .padding(4.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Estado General:",
-            fontSize = 32.sp,
-            lineHeight = 32.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .fillMaxWidth()
-        )
+        Spacer(modifier = modifier.height(80.dp))
+        Row(
+            modifier = modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Text(
+                text = "Estado General",
+                fontSize = 32.sp,
+                lineHeight = 32.sp,
+                fontWeight = FontWeight.SemiBold,
+
+            )
+        }
+        //********** Circular Progress Indicator ****************//
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .padding(16.dp)
                 .size(180.dp),
             contentAlignment = Alignment.Center
         ){
             Text(
-                text = estado.toString(),
+                text = estado,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Light
             )
             CircularProgressIndicator(
-                progress = hum.toFloat() ,
-                color = setProgressColor(hum.toInt()),
-                strokeWidth = 16.dp,
-                modifier = Modifier
+                progress = { hum.toFloat() },
+                modifier = modifier
                     .fillMaxWidth()
                     .fillMaxHeight(),
+                color = setProgressColor(hum),
+                strokeWidth = 16.dp,
             )
         }
-        Row{
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = (tip),
+                color = if (autopump(hum)) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+            )
+        }
+        Row(
+            modifier = modifier
+                .fillMaxWidth(),
+                //.padding(horizontal = 30.dp),
+            horizontalArrangement = Arrangement.Center
+        ){
             Box(
-                modifier = Modifier
+                modifier = modifier
                     .padding(4.dp)
             ){
                 Box(
-                    modifier = Modifier
+                    modifier = modifier
                         .graphicsLayer {
                             shadowElevation = 8.dp.toPx()
                             shape = RoundedCornerShape(8.dp)
@@ -225,8 +295,7 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                         .padding(10.dp)
                 ){
                     Column(
-                        modifier = Modifier
-                        ,
+                        modifier = modifier,
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.Start
                     ) {
@@ -237,7 +306,7 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                             color = MaterialTheme.colorScheme.background
                         )
                         Text(
-                            text = "${ data.message[0].temp }°C",
+                            text = "${ data.message[0].temp.toFloat().toInt() }°C",
                             fontWeight = FontWeight.Bold,
                             fontSize = 40.sp,
                             color = MaterialTheme.colorScheme.background
@@ -247,11 +316,11 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                 }
             }
             Box(
-                modifier = Modifier
+                modifier = modifier
                     .padding(4.dp)
             ){
                 Box(
-                    modifier = Modifier
+                    modifier = modifier
                         .graphicsLayer {
                             shadowElevation = 8.dp.toPx()
                             shape = RoundedCornerShape(8.dp)
@@ -266,8 +335,7 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                         .padding(10.dp)
                 ){
                     Column(
-                        modifier = Modifier
-                        ,
+                        modifier = modifier,
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.Start
                     ) {
@@ -278,7 +346,7 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                             color = MaterialTheme.colorScheme.background
                         )
                         Text(
-                            text = "${ data.message[0].hum }%",
+                            text = "${ data.message[0].hum.toFloat().toInt() }%",
                             fontWeight = FontWeight.Bold,
                             fontSize = 40.sp,
                             color = MaterialTheme.colorScheme.background
@@ -288,13 +356,17 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                 }
             }
         }
-        Row{
+        Row(
+            modifier = modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ){
             Box(
-                modifier = Modifier
+                modifier = modifier
                     .padding(4.dp)
             ){
                 Box(
-                    modifier = Modifier
+                    modifier = modifier
                         .graphicsLayer {
                             shadowElevation = 8.dp.toPx()
                             shape = RoundedCornerShape(8.dp)
@@ -309,7 +381,7 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                         .padding(10.dp)
                 ){
                     Column(
-                        modifier = Modifier
+                        modifier = modifier
                         ,
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.Start
@@ -321,7 +393,7 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                             color = MaterialTheme.colorScheme.background
                         )
                         Text(
-                            text = "${ data.message[0].heat } J",
+                            text = "${ data.message[0].heat.toFloat().toInt() }J",
                             fontWeight = FontWeight.Bold,
                             fontSize = 40.sp,
                             color = MaterialTheme.colorScheme.background
@@ -331,11 +403,11 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                 }
             }
             Box(
-                modifier = Modifier
+                modifier = modifier
                     .padding(4.dp)
             ){
                 Box(
-                    modifier = Modifier
+                    modifier = modifier
                         .graphicsLayer {
                             shadowElevation = 8.dp.toPx()
                             shape = RoundedCornerShape(8.dp)
@@ -350,8 +422,7 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                         .padding(10.dp)
                 ){
                     Column(
-                        modifier = Modifier
-                        ,
+                        modifier = modifier,
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.Start
                     ) {
@@ -362,7 +433,7 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
                             color = MaterialTheme.colorScheme.background
                         )
                         Text(
-                            text = "${ hum.toString() } %",
+                            text = "${hum}%",
                             fontWeight = FontWeight.Bold,
                             fontSize = 40.sp,
                             color = MaterialTheme.colorScheme.background
@@ -373,7 +444,7 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
             }
         }
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .padding(vertical = 10.dp, horizontal = 16.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.End
@@ -385,19 +456,33 @@ fun DhtDetails(viewModel : ApiViewModel,data : DhtModel){
             )
         }
     }
-
-
 }
 
+fun autopump(hum: Int): Boolean {
+    if(hum > 85 ){
+        return false
+    }else{
+        if(hum in 51..85){
+            return false
+        }else{
+            if(hum in 31..50){
+                return true
+            }else{
+                return true
+            }
+        }
+    }
+}
 fun setProgressColor(hum: Int): Color {
     var color = Color(0xFFFFFFFF)
-    if(hum.toFloat() >= 85){
+
+    if(hum > 85){
         color = Color(0xFF00FF13)
     }else{
-        if( 70 > hum.toFloat() && hum.toFloat() <= 50){
+        if( hum in 51..85){
             color = Color(0xFFFFE100)
         }else{
-            if(30 > hum.toFloat() && hum.toFloat() <= 10){
+            if(hum in 31..50){
                 color = Color(0xFFFF7600)
             }else{
                 color = Color(0xFFFF2500)
@@ -405,4 +490,52 @@ fun setProgressColor(hum: Int): Color {
         }
     }
     return color
+}
+fun setState(hum: Int):String{
+    if(hum > 85 ){
+        return "Excelente"
+    }else{
+        if(hum in 51..85){
+            return "Bueno"
+        }else{
+            if(hum in 31..50){
+                return "Regular"
+            }else{
+                return "Malo"
+            }
+        }
+    }
+}
+
+@Composable
+fun HomeHeader(modifier: Modifier,viewModel: ApiViewModel){
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primary)
+    ){
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Text(
+                text = "Inicio",
+                modifier = Modifier.padding(16.dp),
+                color = MaterialTheme.colorScheme.background,
+                fontSize = 22.sp
+            )
+            FilledIconButton(
+                onClick = { viewModel.getData(action,1) },
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_refresh),
+                    contentDescription = "RefreshIcon",
+                    tint = Color.White
+                )
+            }
+        }
+    }
 }
